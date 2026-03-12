@@ -122,38 +122,45 @@ const AppContent: React.FC = () => {
         setLoginError(null);
       } else {
         setIsAdminLoggedIn(false);
-        if (user && view === 'admin') {
-          setLoginError(`Acceso denegado: ${user.email} no tiene permisos de administrador.`);
-          setView('canvas');
-        } else if (!user && view === 'admin') {
-          setView('canvas');
-        }
+        // Use functional update to check view without dependency
+        setView(currentView => {
+          if (user && currentView === 'admin') {
+            setLoginError(`Acceso denegado: ${user.email} no tiene permisos de administrador.`);
+            return 'canvas';
+          } else if (!user && currentView === 'admin') {
+            return 'canvas';
+          }
+          return currentView;
+        });
       }
     });
 
     return () => unsubAuth();
-  }, [view]);
+  }, []);
 
-  // Other effects
+  // Initial load simulation
   useEffect(() => {
-    // Initial load simulation
     const timer = setTimeout(() => setIsLoading(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
-    // Hidden admin access
+  // Hidden admin access
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.altKey && e.key === 'a') {
-        setShowAdminLogin(prev => !prev);
+      if (e.altKey && e.code === 'KeyA') {
+        e.preventDefault();
+        if (isAdminLoggedIn) {
+          setView(prev => prev === 'canvas' ? 'admin' : 'canvas');
+        } else {
+          setShowAdminLogin(prev => !prev);
+        }
         setLoginError(null);
         setAccessCode('');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(timer);
-    };
-  }, []);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAdminLoggedIn]);
 
   const handleAccessCodeLogin = async () => {
     if (accessCode === 'noma2026') {

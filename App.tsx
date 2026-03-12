@@ -306,7 +306,10 @@ const AppContent: React.FC = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
               >
-                <h1 className="font-black text-2xl tracking-tighter text-brand select-none">
+                <h1 
+                  onClick={() => window.location.reload()}
+                  className="font-black text-2xl tracking-tighter text-brand select-none cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   NOMA.BOX
                 </h1>
               </motion.div>
@@ -384,7 +387,8 @@ const AppContent: React.FC = () => {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-4 bg-white/80 backdrop-blur px-4 py-2 rounded-2xl border border-zinc-100 shadow-sm"
+                onClick={() => window.location.reload()}
+                className="flex items-center gap-4 bg-white/80 backdrop-blur px-4 py-2 rounded-2xl border border-zinc-100 shadow-sm cursor-pointer hover:bg-white transition-all"
               >
                 <span className="text-[10px] font-black tracking-widest text-zinc-400 uppercase">noma.box</span>
                 <div className="w-px h-3 bg-zinc-200" />

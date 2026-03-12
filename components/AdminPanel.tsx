@@ -51,16 +51,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onUpda
     <div className="min-h-screen bg-zinc-50">
       <nav className="bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <motion.div 
-            whileHover={{ rotate: 180 }}
-            transition={{ duration: 0.5 }}
-            className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand/20"
+          <div 
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => window.location.reload()}
           >
-            <Settings className="w-6 h-6" />
-          </motion.div>
-          <div>
-            <h1 className="font-bold text-zinc-900 leading-none">Noma Admin</h1>
-            <p className="text-xs text-zinc-500 mt-1">Panel de Control Independiente</p>
+            <motion.div 
+              whileHover={{ rotate: 180 }}
+              transition={{ duration: 0.5 }}
+              className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand/20 group-hover:scale-105 transition-transform"
+            >
+              <Settings className="w-6 h-6" />
+            </motion.div>
+            <div>
+              <h1 className="font-bold text-zinc-900 leading-none group-hover:text-brand transition-colors">Noma Admin</h1>
+              <p className="text-xs text-zinc-500 mt-1">Panel de Control Independiente</p>
+            </div>
           </div>
         </div>
         <button 

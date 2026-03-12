@@ -8,7 +8,7 @@ import { WelcomeScreen } from './components/WelcomeScreen';
 import { PixelUser, Pixel, GRID_SIZE } from './types';
 import { Lock, Search, Instagram, Youtube, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { db, auth, loginWithGoogle, logout, handleFirestoreError, OperationType } from './firebase';
+import { db, auth, loginWithGoogle, loginAnonymously, logout, handleFirestoreError, OperationType } from './firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, query } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
@@ -102,7 +102,7 @@ const AppContent: React.FC = () => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       const adminEmail = 'Jaabo.ay@gmail.com'.toLowerCase();
-      if (user && user.email?.toLowerCase() === adminEmail) {
+      if (user && (user.email?.toLowerCase() === adminEmail || user.isAnonymous)) {
         setIsAdminLoggedIn(true);
         setLoginError(null);
       } else if (user) {
@@ -136,12 +136,17 @@ const AppContent: React.FC = () => {
     };
   }, [view, isAdminLoggedIn]);
 
-  const handleAccessCodeLogin = () => {
+  const handleAccessCodeLogin = async () => {
     if (accessCode === 'noma2026') {
-      setIsAdminLoggedIn(true);
-      setShowAdminLogin(false);
-      setView('admin');
-      setLoginError(null);
+      try {
+        await loginAnonymously();
+        setIsAdminLoggedIn(true);
+        setShowAdminLogin(false);
+        setView('admin');
+        setLoginError(null);
+      } catch (error: any) {
+        setLoginError('Error al iniciar sesión: ' + (error.message || 'Inténtalo de nuevo.'));
+      }
     } else {
       setLoginError('Código de acceso incorrecto.');
     }

@@ -78,6 +78,7 @@ const AppContent: React.FC = () => {
   const [highlightedOwner, setHighlightedOwner] = useState<string | null>(null);
   const [targetPixel, setTargetPixel] = useState<{ x: number, y: number } | null>(null);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -99,8 +100,14 @@ const AppContent: React.FC = () => {
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
-      if (user && user.email === 'Jaabo.ay@gmail.com') {
+      const adminEmail = 'Jaabo.ay@gmail.com'.toLowerCase();
+      if (user && user.email?.toLowerCase() === adminEmail) {
         setIsAdminLoggedIn(true);
+        setLoginError(null);
+      } else if (user) {
+        setIsAdminLoggedIn(false);
+        setLoginError(`Acceso denegado: ${user.email} no tiene permisos de administrador.`);
+        if (view === 'admin') setView('canvas');
       } else {
         setIsAdminLoggedIn(false);
         if (view === 'admin') setView('canvas');
@@ -114,6 +121,7 @@ const AppContent: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 'a') {
         setShowAdminLogin(prev => !prev);
+        setLoginError(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -125,7 +133,7 @@ const AppContent: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(timer);
     };
-  }, []);
+  }, [view]);
 
   const handleAddUser = async (username: string, pixelCount: number, color: string, shape: any = 'square') => {
     if (!isAdminLoggedIn) return;
@@ -201,12 +209,25 @@ const AppContent: React.FC = () => {
   };
 
   const handleAdminLogin = async () => {
+    setLoginError(null);
     try {
-      await loginWithGoogle();
-      setShowAdminLogin(false);
-      setView('admin');
-    } catch (error) {
+      const result = await loginWithGoogle();
+      const adminEmail = 'Jaabo.ay@gmail.com'.toLowerCase();
+      if (result.user.email?.toLowerCase() === adminEmail) {
+        setShowAdminLogin(false);
+        setView('admin');
+      } else {
+        setLoginError(`Acceso denegado: ${result.user.email} no tiene permisos de administrador.`);
+      }
+    } catch (error: any) {
       console.error("Login failed", error);
+      if (error.code === 'auth/popup-blocked') {
+        setLoginError('El navegador bloqueó la ventana emergente. Por favor, permite las ventanas emergentes para este sitio.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        setLoginError('Se canceló el inicio de sesión.');
+      } else {
+        setLoginError('Error al iniciar sesión: ' + (error.message || 'Inténtalo de nuevo.'));
+      }
     }
   };
 
@@ -358,9 +379,28 @@ const AppContent: React.FC = () => {
               <p className="text-zinc-500 text-sm font-medium">
                 Inicia sesión con Google para acceder al panel de administración.
               </p>
+              
+              {loginError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100 space-y-2"
+                >
+                  <p>{loginError}</p>
+                  {currentUser && (
+                    <button 
+                      onClick={() => logout()}
+                      className="text-red-700 underline hover:text-red-900 transition-colors"
+                    >
+                      Cerrar sesión para cambiar de cuenta
+                    </button>
+                  )}
+                </motion.div>
+              )}
+
               <button
                 onClick={handleAdminLogin}
-                className="w-full py-4 bg-brand text-white rounded-2xl hover:bg-brand-dark transition-all font-black shadow-xl shadow-brand/20 flex items-center justify-center gap-3"
+                className="w-full py-4 bg-brand text-white rounded-2xl hover:bg-brand-dark transition-all font-black shadow-xl shadow-brand/20 flex items-center justify-center gap-3 active:scale-95"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

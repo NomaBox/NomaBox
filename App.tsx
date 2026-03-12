@@ -4,25 +4,39 @@ import { Canvas } from './components/Canvas';
 import { AdminPanel } from './components/AdminPanel';
 import { UserDashboard } from './components/UserDashboard';
 import { CookieConsent } from './components/CookieConsent';
+import { WelcomeScreen } from './components/WelcomeScreen';
 import { PixelUser, Pixel, GRID_SIZE } from './types';
 import { Lock, Search, Instagram, Youtube } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'canvas' | 'admin'>('canvas');
-  const [users, setUsers] = useState<PixelUser[]>([]);
-  const [pixels, setPixels] = useState<Pixel[]>([]);
+  const [users, setUsers] = useState<PixelUser[]>(() => {
+    const saved = localStorage.getItem('noma-users');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [pixels, setPixels] = useState<Pixel[]>(() => {
+    const saved = localStorage.getItem('noma-pixels');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [highlightedOwner, setHighlightedOwner] = useState<string | null>(null);
   const [targetPixel, setTargetPixel] = useState<{ x: number, y: number } | null>(null);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('noma-users', JSON.stringify(users));
+    localStorage.setItem('noma-pixels', JSON.stringify(pixels));
+  }, [users, pixels]);
 
   // Initialize with empty data
   useEffect(() => {
-    setUsers([]);
-    setPixels([]);
+    // Simulate initial load
+    const timer = setTimeout(() => setIsLoading(false), 2500);
 
     // Hidden admin access: Press 'Alt + A' to show login
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,7 +45,10 @@ const App: React.FC = () => {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleAddUser = (username: string, pixelCount: number, color: string, shape: any = 'square') => {
@@ -93,6 +110,10 @@ const App: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-white overflow-hidden font-sans selection:bg-brand/20">
+      <AnimatePresence mode="wait">
+        {isLoading && <WelcomeScreen key="welcome" />}
+      </AnimatePresence>
+
       {/* Full Screen Canvas */}
       <div className="absolute inset-0 z-0">
         <Canvas 

@@ -14,17 +14,18 @@ interface AdminPanelProps {
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onUpdateUser, onDeleteUser, onLogout }) => {
   const [newUsername, setNewUsername] = useState('');
-  const [newPixelCount, setNewPixelCount] = useState(1);
-  const [newColor, setNewColor] = useState(PALETTE[1]); // Default to primary orange
   const [newShape, setNewShape] = useState<PixelShape>('square');
   const [bulkUsernames, setBulkUsernames] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newUsername.trim()) {
-      onAddUser(newUsername.trim(), newPixelCount, newColor, newShape);
+      // Pick a random color from the palette (excluding white if possible, or just random)
+      const colors = PALETTE.filter(c => c !== '#FFFFFF');
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      
+      onAddUser(newUsername.trim(), 1, randomColor, newShape);
       setNewUsername('');
-      setNewPixelCount(1);
     }
   };
 
@@ -36,7 +37,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onUpda
       .filter(u => u.length > 0);
 
     usernames.forEach(username => {
-      const randomColor = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+      const colors = PALETTE.filter(c => c !== '#FFFFFF' && c !== '#F8F9FA');
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
       const shapes: PixelShape[] = ['square', 'circle', 'diamond', 'triangle'];
       const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
       onAddUser(username, 1, randomColor, randomShape);
@@ -97,31 +99,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onUpda
                     placeholder="@seguidor"
                     className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
                   />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Cantidad</label>
-                  <input
-                    type="number"
-                    value={newPixelCount}
-                    onChange={(e) => setNewPixelCount(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Color de Marca</label>
-                  <div className="grid grid-cols-5 gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
-                    {PALETTE.map((color) => (
-                      <motion.button
-                        key={color}
-                        type="button"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setNewColor(color)}
-                        className={`aspect-square rounded-lg border transition-all ${newColor === color ? 'ring-2 ring-brand ring-offset-2 scale-110' : 'border-zinc-200'}`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">

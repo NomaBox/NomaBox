@@ -164,7 +164,11 @@ const AppContent: React.FC = () => {
         setView('admin');
         setLoginError(null);
       } catch (error: any) {
-        setLoginError('Error al iniciar sesión: ' + (error.message || 'Inténtalo de nuevo.'));
+        if (error.code === 'auth/admin-restricted-operation') {
+          setLoginError('Error: Debes habilitar "Anonymous Authentication" en tu consola de Firebase para usar el código de acceso.');
+        } else {
+          setLoginError('Error al iniciar sesión: ' + (error.message || 'Inténtalo de nuevo.'));
+        }
       }
     } else {
       setLoginError('Código de acceso incorrecto.');

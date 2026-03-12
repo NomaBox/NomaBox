@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
 import { Pixel, GRID_SIZE } from '../types';
-import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 
 interface CanvasProps {
   pixels: Pixel[];
@@ -75,13 +74,43 @@ export const Canvas: React.FC<CanvasProps> = ({ pixels, onPixelClick, highlighte
       }
     };
 
+    let initialDistance = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        initialDistance = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const currentDistance = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+        
+        if (initialDistance > 0) {
+          const delta = (currentDistance - initialDistance) / 200;
+          handleZoom(delta);
+          initialDistance = currentDistance;
+        }
+      }
+    };
+
     const container = containerRef.current;
     if (container) {
       container.addEventListener('wheel', handleWheel, { passive: false });
+      container.addEventListener('touchstart', handleTouchStart, { passive: true });
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
     }
     return () => {
       if (container) {
         container.removeEventListener('wheel', handleWheel);
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchmove', handleTouchMove);
       }
     };
   }, []);

@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "PixelUser": {
+      "title": "PixelUser",
+      "description": "A user who owns pixels on the grid",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "pixelCount": { "type": "number" },
+        "color": { "type": "string" },
+        "shape": { "type": "string" },
+        "lastUpdated": { "type": "number" }
+      },
+      "required": ["id", "username", "pixelCount", "color", "lastUpdated"]
+    },
+    "Pixel": {
+      "title": "Pixel",
+      "description": "A single pixel on the grid",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "color": { "type": "string" },
+        "shape": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "ownerName": { "type": "string" }
+      },
+      "required": ["id", "x", "y", "color", "ownerId", "ownerName"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "PixelUser",
+      "description": "Collection of pixel owners"
+    },
+    "pixels": {
+      "schema": "Pixel",
+      "description": "Collection of placed pixels"
+    }
+  }
+}

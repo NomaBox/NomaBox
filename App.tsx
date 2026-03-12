@@ -85,35 +85,57 @@ const AppContent: React.FC = () => {
 
   // Sync with Firestore
   useEffect(() => {
+    console.log('Attaching Firestore listeners...');
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
       const usersData = snapshot.docs.map(doc => doc.data() as PixelUser);
+      console.log('Users sync:', usersData.length, 'users found');
       setUsers(usersData);
     }, (error) => {
+      console.error('Users sync error:', error);
       handleFirestoreError(error, OperationType.LIST, 'users');
     });
 
     const unsubPixels = onSnapshot(collection(db, 'pixels'), (snapshot) => {
       const pixelsData = snapshot.docs.map(doc => doc.data() as Pixel);
+      console.log('Pixels sync:', pixelsData.length, 'pixels found');
       setPixels(pixelsData);
     }, (error) => {
+      console.error('Pixels sync error:', error);
       handleFirestoreError(error, OperationType.LIST, 'pixels');
     });
 
+    return () => {
+      console.log('Detaching Firestore listeners...');
+      unsubUsers();
+      unsubPixels();
+    };
+  }, []);
+
+  // Auth Listener
+  useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       const adminEmail = 'Jaabo.ay@gmail.com'.toLowerCase();
+      
       if (user && (user.email?.toLowerCase() === adminEmail || user.isAnonymous)) {
         setIsAdminLoggedIn(true);
         setLoginError(null);
-      } else if (user) {
-        // Don't set error immediately on auth change to avoid confusing manual login
-        if (view === 'admin' && !isAdminLoggedIn) {
+      } else {
+        setIsAdminLoggedIn(false);
+        if (user && view === 'admin') {
           setLoginError(`Acceso denegado: ${user.email} no tiene permisos de administrador.`);
+          setView('canvas');
+        } else if (!user && view === 'admin') {
           setView('canvas');
         }
       }
     });
 
+    return () => unsubAuth();
+  }, [view]);
+
+  // Other effects
+  useEffect(() => {
     // Initial load simulation
     const timer = setTimeout(() => setIsLoading(false), 2500);
 
@@ -128,13 +150,10 @@ const AppContent: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      unsubUsers();
-      unsubPixels();
-      unsubAuth();
       window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(timer);
     };
-  }, [view, isAdminLoggedIn]);
+  }, []);
 
   const handleAccessCodeLogin = async () => {
     if (accessCode === 'noma2026') {
@@ -153,10 +172,15 @@ const AppContent: React.FC = () => {
   };
 
   const handleAddUser = async (username: string, pixelCount: number, color: string, shape: any = 'square') => {
-    if (!isAdminLoggedIn) return;
+    console.log('Attempting to add user:', username, { isAdminLoggedIn });
+    if (!isAdminLoggedIn) {
+      console.error('Add user failed: Not logged in as admin');
+      return;
+    }
 
     const cleanUsername = username.trim().toLowerCase().startsWith('@') ? username.trim() : `@${username.trim()}`;
     if (users.some(u => u.username.toLowerCase() === cleanUsername.toLowerCase())) {
+      console.warn('User already exists:', cleanUsername);
       return;
     }
 
@@ -164,7 +188,7 @@ const AppContent: React.FC = () => {
     const newUser: PixelUser = {
       id: userId,
       username: cleanUsername,
-      pixelCount: 1,
+      pixelCount: pixelCount || 1,
       color,
       shape,
       rewards: [],
@@ -183,9 +207,12 @@ const AppContent: React.FC = () => {
     };
 
     try {
+      console.log('Writing to Firestore...', { userId, pixelId });
       await setDoc(doc(db, 'users', userId), newUser);
       await setDoc(doc(db, 'pixels', pixelId), newPixel);
+      console.log('Successfully added user and pixel');
     } catch (error) {
+      console.error('Firestore write error:', error);
       handleFirestoreError(error, OperationType.WRITE, 'users/pixels');
     }
   };

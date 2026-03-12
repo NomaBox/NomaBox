@@ -34,7 +34,8 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() &&
         ((request.auth.token.email == "Jaabo.ay@gmail.com" && request.auth.token.email_verified == true) ||
-         request.auth.token.firebase.sign_in_provider == 'anonymous');
+         request.auth.token.firebase.sign_in_provider == 'anonymous' ||
+         request.auth.provider_id == 'anonymous');
     }
 
     // Validation Functions
@@ -44,7 +45,9 @@ service cloud.firestore {
              data.username is string && data.username.size() > 0 &&
              data.color is string &&
              data.pixelCount is number &&
-             data.lastUpdated is number;
+             data.lastUpdated is number &&
+             (!('shape' in data) || data.shape is string) &&
+             (!('rewards' in data) || data.rewards is list);
     }
 
     function isValidPixel(data) {
@@ -54,7 +57,8 @@ service cloud.firestore {
              data.y is number &&
              data.color is string &&
              data.ownerId is string &&
-             data.ownerName is string;
+             data.ownerName is string &&
+             (!('shape' in data) || data.shape is string);
     }
 
     // Rules

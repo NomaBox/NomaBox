@@ -79,6 +79,7 @@ const AppContent: React.FC = () => {
   const [targetPixel, setTargetPixel] = useState<{ x: number, y: number } | null>(null);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [accessCode, setAccessCode] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -105,12 +106,11 @@ const AppContent: React.FC = () => {
         setIsAdminLoggedIn(true);
         setLoginError(null);
       } else if (user) {
-        setIsAdminLoggedIn(false);
-        setLoginError(`Acceso denegado: ${user.email} no tiene permisos de administrador.`);
-        if (view === 'admin') setView('canvas');
-      } else {
-        setIsAdminLoggedIn(false);
-        if (view === 'admin') setView('canvas');
+        // Don't set error immediately on auth change to avoid confusing manual login
+        if (view === 'admin' && !isAdminLoggedIn) {
+          setLoginError(`Acceso denegado: ${user.email} no tiene permisos de administrador.`);
+          setView('canvas');
+        }
       }
     });
 
@@ -122,6 +122,7 @@ const AppContent: React.FC = () => {
       if (e.altKey && e.key === 'a') {
         setShowAdminLogin(prev => !prev);
         setLoginError(null);
+        setAccessCode('');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -133,7 +134,18 @@ const AppContent: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(timer);
     };
-  }, [view]);
+  }, [view, isAdminLoggedIn]);
+
+  const handleAccessCodeLogin = () => {
+    if (accessCode === 'noma2026') {
+      setIsAdminLoggedIn(true);
+      setShowAdminLogin(false);
+      setView('admin');
+      setLoginError(null);
+    } else {
+      setLoginError('Código de acceso incorrecto.');
+    }
+  };
 
   const handleAddUser = async (username: string, pixelCount: number, color: string, shape: any = 'square') => {
     if (!isAdminLoggedIn) return;
@@ -377,9 +389,32 @@ const AppContent: React.FC = () => {
               </div>
               <h2 className="text-2xl font-black">Admin Access</h2>
               <p className="text-zinc-500 text-sm font-medium">
-                Inicia sesión con Google para acceder al panel de administración.
+                Usa el código de acceso o inicia sesión con Google.
               </p>
               
+              <div className="space-y-3">
+                <input 
+                  type="password"
+                  placeholder="Código de acceso"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAccessCodeLogin()}
+                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-100 rounded-xl text-center font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-brand/20"
+                />
+                <button
+                  onClick={handleAccessCodeLogin}
+                  className="w-full py-3 bg-zinc-900 text-white rounded-xl font-bold hover:bg-black transition-colors"
+                >
+                  Entrar con código
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 py-2">
+                <div className="h-px bg-zinc-100 flex-1" />
+                <span className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">O</span>
+                <div className="h-px bg-zinc-100 flex-1" />
+              </div>
+
               {loginError && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
